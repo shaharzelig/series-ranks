@@ -132,7 +132,7 @@ def test_early_return_includes_all_fields():
     assert result["watched_median"] is None
     assert result["pct_ahead_beats_median"] is None
     assert result["momentum"] == {"behind_median": None, "ahead_median": None, "direction": None}
-    assert result["seasons"] == []
+    assert isinstance(result["seasons"], list)
 
 
 # ── momentum ────────────────────────────────────────────────────────────────
@@ -170,3 +170,64 @@ def test_momentum_object_always_present():
     result = compute_verdict(eps, current_season=1, current_episode=1)
     assert "momentum" in result
     assert isinstance(result["momentum"], dict)
+
+
+# ── season breakdown ─────────────────────────────────────────────────────────
+
+def _make_multi_season_episodes():
+    """3 seasons, 5 episodes each. S1: 7s, S2: 8s, S3: 6s."""
+    data = {
+        1: [7.0, 7.5, 7.2, 7.8, 7.3],
+        2: [8.0, 8.5, 8.2, 8.8, 8.3],
+        3: [6.0, 6.5, 6.2, 6.8, 6.3],
+    }
+    eps = []
+    for season, scores in data.items():
+        for ep_num, score in enumerate(scores, 1):
+            eps.append({
+                "season": season, "episode": ep_num,
+                "title": f"S{season}E{ep_num}",
+                "score": score, "imdb_score": score, "imdb_votes": 100,
+            })
+    return eps
+
+def test_seasons_status_flags():
+    eps = _make_multi_season_episodes()
+    # User at S2E3: S1 fully watched, S2 partial, S3 ahead
+    result = compute_verdict(eps, current_season=2, current_episode=3)
+    by_season = {s["season"]: s for s in result["seasons"]}
+
+    assert by_season[1]["is_fully_watched"]    is True
+    assert by_season[1]["is_partially_watched"] is False
+    assert by_season[1]["is_ahead"]             is False
+
+    assert by_season[2]["is_fully_watched"]    is False
+    assert by_season[2]["is_partially_watched"] is True
+    assert by_season[2]["is_ahead"]             is False
+
+    assert by_season[3]["is_fully_watched"]    is False
+    assert by_season[3]["is_partially_watched"] is False
+    assert by_season[3]["is_ahead"]             is True
+
+def test_seasons_median_and_rated_count():
+    eps = _make_multi_season_episodes()
+    result = compute_verdict(eps, current_season=1, current_episode=1)
+    by_season = {s["season"]: s for s in result["seasons"]}
+    # S1 sorted: [7.0, 7.2, 7.3, 7.5, 7.8] → median = 7.3
+    assert by_season[1]["median"] == 7.3
+    assert by_season[1]["rated_count"] == 5
+
+def test_seasons_null_median_when_unrated():
+    eps = [
+        {"season": 1, "episode": 1, "title": "E1", "score": None, "imdb_score": None, "imdb_votes": 0},
+        {"season": 1, "episode": 2, "title": "E2", "score": None, "imdb_score": None, "imdb_votes": 0},
+    ]
+    result = compute_verdict(eps, current_season=1, current_episode=1)
+    assert result["seasons"][0]["median"] is None
+    assert result["seasons"][0]["rated_count"] == 0
+
+def test_seasons_ordered_by_season_number():
+    eps = _make_multi_season_episodes()
+    result = compute_verdict(eps, current_season=1, current_episode=1)
+    season_nums = [s["season"] for s in result["seasons"]]
+    assert season_nums == sorted(season_nums)

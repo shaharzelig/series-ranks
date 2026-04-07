@@ -22,6 +22,38 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
     return a verdict dict.
     """
     rated = [e for e in episodes if e.get("score") is not None]
+
+    # ── Season breakdown ─────────────────────────────────────────────────────
+    seasons_dict: dict[int, list] = {}
+    for e in episodes:
+        seasons_dict.setdefault(e["season"], []).append(e)
+
+    seasons = []
+    for season_num in sorted(seasons_dict.keys()):
+        s_eps    = seasons_dict[season_num]
+        s_rated  = [e for e in s_eps if e.get("score") is not None]
+        s_scores = [e["score"] for e in s_rated]
+
+        any_watched = any(
+            e["season"] < current_season
+            or (e["season"] == current_season and e["episode"] <= current_episode)
+            for e in s_eps
+        )
+        all_watched = all(
+            e["season"] < current_season
+            or (e["season"] == current_season and e["episode"] <= current_episode)
+            for e in s_eps
+        )
+
+        seasons.append({
+            "season":               season_num,
+            "median":               round(statistics.median(s_scores), 3) if s_scores else None,
+            "rated_count":          len(s_rated),
+            "is_fully_watched":     all_watched,
+            "is_partially_watched": any_watched and not all_watched,
+            "is_ahead":             not any_watched,
+        })
+
     if not rated:
         return {
             "verdict": "you_can_stop",
@@ -37,7 +69,7 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
             "pct_ahead_beats_median": None,
             "pct_ahead_beats_best": None,
             "momentum": {"behind_median": None, "ahead_median": None, "direction": None},
-            "seasons": [],
+            "seasons": seasons,
         }
 
     top_n = min(10, len(rated))
@@ -130,5 +162,5 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
         "pct_ahead_beats_median": pct_ahead_beats_median,
         "pct_ahead_beats_best": pct_ahead_beats_best,
         "momentum": momentum,
-        "seasons": [],
+        "seasons": seasons,
     }
