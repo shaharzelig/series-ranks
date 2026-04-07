@@ -1,6 +1,7 @@
 # backend/verdict.py
 import math
 import re
+import statistics
 
 
 def parse_episode_code(code: str) -> tuple[int, int]:
@@ -31,6 +32,12 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
             "best_episode_ahead": None,
             "avg_score_ahead": None,
             "avg_score_behind": None,
+            "watched_median": None,
+            "watched_best": None,
+            "pct_ahead_beats_median": None,
+            "pct_ahead_beats_best": None,
+            "momentum": {"behind_median": None, "ahead_median": None, "direction": None},
+            "seasons": [],
         }
 
     top_n = min(10, len(rated))
@@ -43,6 +50,29 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
         if e["season"] < current_season
         or (e["season"] == current_season and e["episode"] <= current_episode)
     }
+
+    # ── Density ─────────────────────────────────────────────────────────────
+    watched_eps = [e for e in rated if (e["season"], e["episode"]) in watched]
+    ahead_eps   = [e for e in rated if (e["season"], e["episode"]) not in watched]
+
+    watched_scores = [e["score"] for e in watched_eps]
+    ahead_scores   = [e["score"] for e in ahead_eps]
+
+    if watched_scores:
+        watched_median = round(statistics.median(watched_scores), 3)
+        watched_best   = round(max(watched_scores), 3)
+        if ahead_scores:
+            pct_ahead_beats_median = round(
+                100 * sum(1 for s in ahead_scores if s > watched_median) / len(ahead_scores)
+            )
+            pct_ahead_beats_best = round(
+                100 * sum(1 for s in ahead_scores if s > watched_best) / len(ahead_scores)
+            )
+        else:
+            pct_ahead_beats_median = 0
+            pct_ahead_beats_best   = 0
+    else:
+        watched_median = watched_best = pct_ahead_beats_median = pct_ahead_beats_best = None
 
     top_n_ahead = sum(1 for key in top_set if key not in watched)
     top_n_behind = top_n - top_n_ahead
@@ -73,4 +103,8 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
         "best_episode_ahead": best_ahead,
         "avg_score_ahead": avg_ahead,
         "avg_score_behind": avg_behind,
+        "watched_median": watched_median,
+        "watched_best": watched_best,
+        "pct_ahead_beats_median": pct_ahead_beats_median,
+        "pct_ahead_beats_best": pct_ahead_beats_best,
     }

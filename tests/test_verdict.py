@@ -88,3 +88,38 @@ def test_verdict_multi_season_boundary():
     assert result["avg_score_ahead"] is not None
     # The top episodes should mostly be in S2 (higher scores)
     assert result["best_episode_ahead"]["season"] == 2
+
+
+# ── density metrics ─────────────────────────────────────────────────────────
+
+def test_density_basic():
+    # Watched: S1E1(6.0), S1E2(8.0) → median=7.0, best=8.0
+    # Ahead: S1E3(9.0), S1E4(7.5), S1E5(6.5), S1E6(5.5)
+    # beats median (7.0): [9.0, 7.5] = 2/4 = 50%
+    # beats best  (8.0): [9.0]       = 1/4 = 25%
+    eps = _make_episodes([6.0, 8.0, 9.0, 7.5, 6.5, 5.5])
+    result = compute_verdict(eps, current_season=1, current_episode=2)
+    assert result["watched_median"] == 7.0
+    assert result["watched_best"] == 8.0
+    assert result["pct_ahead_beats_median"] == 50
+    assert result["pct_ahead_beats_best"] == 25
+
+def test_density_all_none_when_no_watched_rated():
+    # S1E1 is unrated — watched set is empty after filtering to rated
+    eps = [
+        {"season": 1, "episode": 1, "title": "E1", "score": None, "imdb_score": None, "imdb_votes": 0},
+        {"season": 1, "episode": 2, "title": "E2", "score": 8.0,  "imdb_score": 8.0,  "imdb_votes": 100},
+    ]
+    result = compute_verdict(eps, current_season=1, current_episode=1)
+    assert result["watched_median"] is None
+    assert result["watched_best"] is None
+    assert result["pct_ahead_beats_median"] is None
+    assert result["pct_ahead_beats_best"] is None
+
+def test_density_zero_when_nothing_ahead():
+    # User at last episode — nothing ahead, percentages are 0 (not None)
+    eps = _make_episodes([7.0, 8.0, 9.0])
+    result = compute_verdict(eps, current_season=1, current_episode=3)
+    assert result["watched_median"] == 8.0   # median of [7.0, 8.0, 9.0]
+    assert result["pct_ahead_beats_median"] == 0
+    assert result["pct_ahead_beats_best"] == 0
