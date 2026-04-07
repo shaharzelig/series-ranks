@@ -19,14 +19,14 @@ def _get_merged_episodes(imdb_id: str) -> list[dict]:
     eps = imdb.get_episodes(imdb_id)
     tmdb_ratings: dict = {}
     if os.getenv("TMDB_API_KEY"):
-        info = imdb.get_series_info(imdb_id)
-        if info:
-            show_id = tmdb.find_show_id(info["title"])
-            if show_id:
-                try:
+        try:
+            info = imdb.get_series_info(imdb_id)
+            if info:
+                show_id = tmdb.find_show_id(info["title"])
+                if show_id:
                     tmdb_ratings = tmdb.get_episode_ratings(show_id)
-                except Exception:
-                    pass  # TMDB unavailable — silently fall back to IMDB only
+        except Exception:
+            pass  # TMDB unavailable — silently fall back to IMDB only
     return merge_episodes(eps, tmdb_ratings)
 
 
