@@ -70,3 +70,21 @@ def test_verdict_message_uses_top_n():
     eps = _make_episodes([9.0, 8.9, 8.8, 8.7, 8.6, 8.5, 8.4, 8.3, 8.2, 8.1])
     result = compute_verdict(eps, current_season=1, current_episode=1)
     assert "top 10" in result["message"]
+
+def test_verdict_multi_season_boundary():
+    # User at end of season 1 — season 2 episodes are all ahead
+    eps = [
+        {"season": 1, "episode": i, "title": f"S1E{i}", "score": 7.0 + i * 0.1, "imdb_score": 7.0 + i * 0.1, "imdb_votes": 100}
+        for i in range(1, 6)
+    ] + [
+        {"season": 2, "episode": i, "title": f"S2E{i}", "score": 8.0 + i * 0.1, "imdb_score": 8.0 + i * 0.1, "imdb_votes": 100}
+        for i in range(1, 6)
+    ]
+    result = compute_verdict(eps, current_season=1, current_episode=5)
+    # All season 2 episodes are ahead
+    ahead_seasons = {e["season"] for e in eps if (e["season"], e["episode"]) not in
+                     {(e2["season"], e2["episode"]) for e2 in eps
+                      if e2["season"] < 1 or (e2["season"] == 1 and e2["episode"] <= 5)}}
+    assert result["avg_score_ahead"] is not None
+    # The top episodes should mostly be in S2 (higher scores)
+    assert result["best_episode_ahead"]["season"] == 2

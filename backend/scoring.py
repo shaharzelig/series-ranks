@@ -4,7 +4,7 @@
 def bayesian_score(v: float, R: float, C: float, m: float = 100.0) -> float:
     """
     Bayesian-weighted score. Pulls low-vote episodes toward the series mean C.
-    v: vote count, R: raw rating, C: series mean, m: minimum vote threshold.
+    v: vote count (must be >= 0), R: raw rating, C: series mean, m: minimum vote threshold.
     """
     if v <= 0:
         return C
@@ -32,7 +32,7 @@ def merge_episodes(imdb_eps: list[dict], tmdb_ratings: dict) -> list[dict]:
         tmdb_b = None
         tmdb_score = tmdb.get("tmdb_score")
         tmdb_votes = tmdb.get("tmdb_votes", 0)
-        if tmdb_score and tmdb_score > 0:
+        if tmdb_score is not None and tmdb_score > 0:
             tmdb_b = bayesian_score(tmdb_votes, tmdb_score, C)
 
         components = [s for s in [imdb_b, tmdb_b] if s is not None]

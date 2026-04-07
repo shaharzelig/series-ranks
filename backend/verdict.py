@@ -9,7 +9,7 @@ def parse_episode_code(code: str) -> tuple[int, int]:
     Raises ValueError if format is unrecognised.
     """
     code = code.strip().upper()
-    m = re.match(r"S(\d+)E(\d+)", code) or re.match(r"(\d+)X(\d+)", code)
+    m = re.match(r"S(\d+)E(\d+)$", code) or re.match(r"(\d+)X(\d+)$", code)
     if not m:
         raise ValueError(f"Invalid episode format: {code!r}. Use S03E05 or 3x05.")
     return int(m.group(1)), int(m.group(2))
