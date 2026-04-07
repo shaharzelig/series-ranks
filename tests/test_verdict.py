@@ -123,3 +123,13 @@ def test_density_zero_when_nothing_ahead():
     assert result["watched_median"] == 8.0   # median of [7.0, 8.0, 9.0]
     assert result["pct_ahead_beats_median"] == 0
     assert result["pct_ahead_beats_best"] == 0
+
+def test_early_return_includes_all_fields():
+    # No rated episodes → early return; shape must match full return
+    eps = [{"season": 1, "episode": 1, "title": "E1", "score": None, "imdb_score": None, "imdb_votes": 0}]
+    result = compute_verdict(eps, current_season=1, current_episode=1)
+    assert result["verdict"] == "you_can_stop"
+    assert result["watched_median"] is None
+    assert result["pct_ahead_beats_median"] is None
+    assert result["momentum"] == {"behind_median": None, "ahead_median": None, "direction": None}
+    assert result["seasons"] == []

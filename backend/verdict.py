@@ -107,4 +107,6 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
         "watched_best": watched_best,
         "pct_ahead_beats_median": pct_ahead_beats_median,
         "pct_ahead_beats_best": pct_ahead_beats_best,
+        "momentum": {"behind_median": None, "ahead_median": None, "direction": None},
+        "seasons": [],
     }
