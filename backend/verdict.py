@@ -1,0 +1,76 @@
+# backend/verdict.py
+import math
+import re
+
+
+def parse_episode_code(code: str) -> tuple[int, int]:
+    """
+    Parse 'S03E05', '3x05', 's3e5' → (season, episode).
+    Raises ValueError if format is unrecognised.
+    """
+    code = code.strip().upper()
+    m = re.match(r"S(\d+)E(\d+)", code) or re.match(r"(\d+)X(\d+)", code)
+    if not m:
+        raise ValueError(f"Invalid episode format: {code!r}. Use S03E05 or 3x05.")
+    return int(m.group(1)), int(m.group(2))
+
+
+def compute_verdict(episodes: list[dict], current_season: int, current_episode: int) -> dict:
+    """
+    Given a merged episode list and the user's current position,
+    return a verdict dict.
+    """
+    rated = [e for e in episodes if e.get("score") is not None]
+    if not rated:
+        return {
+            "verdict": "you_can_stop",
+            "message": "No rated episodes found",
+            "top_n": 0,
+            "top_n_ahead": 0,
+            "top_n_behind": 0,
+            "best_episode_ahead": None,
+            "avg_score_ahead": None,
+            "avg_score_behind": None,
+        }
+
+    top_n = min(10, len(rated))
+    top_eps = sorted(rated, key=lambda e: e["score"], reverse=True)[:top_n]
+    top_set = {(e["season"], e["episode"]) for e in top_eps}
+
+    watched = {
+        (e["season"], e["episode"])
+        for e in rated
+        if e["season"] < current_season
+        or (e["season"] == current_season and e["episode"] <= current_episode)
+    }
+
+    top_n_ahead = sum(1 for key in top_set if key not in watched)
+    top_n_behind = top_n - top_n_ahead
+
+    threshold_keep = math.ceil(top_n * 0.7)
+    threshold_up = math.ceil(top_n * 0.4)
+
+    if top_n_ahead >= threshold_keep:
+        verdict = "keep_watching"
+    elif top_n_ahead >= threshold_up:
+        verdict = "up_to_you"
+    else:
+        verdict = "you_can_stop"
+
+    ahead = [e for e in rated if (e["season"], e["episode"]) not in watched]
+    best_ahead = max(ahead, key=lambda e: e["score"], default=None)
+
+    avg_ahead = round(sum(e["score"] for e in ahead) / len(ahead), 1) if ahead else None
+    behind = [e for e in rated if (e["season"], e["episode"]) in watched]
+    avg_behind = round(sum(e["score"] for e in behind) / len(behind), 1) if behind else None
+
+    return {
+        "verdict": verdict,
+        "message": f"{top_n_ahead} of the top {top_n} episodes are still ahead of you",
+        "top_n": top_n,
+        "top_n_ahead": top_n_ahead,
+        "top_n_behind": top_n_behind,
+        "best_episode_ahead": best_ahead,
+        "avg_score_ahead": avg_ahead,
+        "avg_score_behind": avg_behind,
+    }
