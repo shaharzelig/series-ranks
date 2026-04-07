@@ -1,5 +1,6 @@
 # backend/main.py
 import os
+from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
@@ -11,7 +12,14 @@ from backend.verdict import compute_verdict, parse_episode_code
 
 load_dotenv()
 
-app = FastAPI(title="Series Ranks")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    imdb.preload()  # load parquet files before accepting requests
+    yield
+
+
+app = FastAPI(title="Series Ranks", lifespan=lifespan)
 
 
 def _get_merged_episodes(imdb_id: str) -> list[dict]:
