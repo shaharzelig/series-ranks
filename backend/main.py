@@ -15,7 +15,7 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    imdb.preload()  # load parquet files before accepting requests
+    imdb.preload_series()  # load series index (~20MB) before accepting requests
     yield
 
 

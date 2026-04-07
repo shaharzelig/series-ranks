@@ -16,7 +16,7 @@ MOCK_SEARCH = [{"imdb_id": "tt7587890", "title": "The Rookie", "year": "2018", "
 
 @pytest.fixture
 def client():
-    with patch("backend.imdb.preload", return_value=None), \
+    with patch("backend.imdb.preload_series", return_value=None), \
          patch("backend.imdb.search_series", return_value=MOCK_SEARCH), \
          patch("backend.imdb.get_series_info", return_value=MOCK_SERIES_INFO), \
          patch("backend.imdb.get_episodes", return_value=MOCK_EPISODES), \

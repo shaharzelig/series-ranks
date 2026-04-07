@@ -5,9 +5,8 @@ import pandas as pd
 
 CACHE_DIR = os.environ.get("IMDB_DATA_DIR", os.path.expanduser("~/.cache/imdb_datasets"))
 
-# Module-level dataframe cache — loaded once per process
+# Series index — loaded once at startup, stays in memory (~20MB)
 _series_df: pd.DataFrame | None = None
-_episodes_df: pd.DataFrame | None = None
 
 
 def _series() -> pd.DataFrame:
@@ -17,17 +16,14 @@ def _series() -> pd.DataFrame:
     return _series_df
 
 
-def _episodes() -> pd.DataFrame:
-    global _episodes_df
-    if _episodes_df is None:
-        _episodes_df = pd.read_parquet(os.path.join(CACHE_DIR, "episodes.parquet"))
-    return _episodes_df
+def _episodes_path() -> str:
+    return os.path.join(CACHE_DIR, "episodes.parquet")
 
 
-def preload() -> None:
-    """Eagerly load both DataFrames into memory (called at app startup)."""
+def preload_series() -> None:
+    """Eagerly load the series index at startup (small, ~20MB).
+    Episodes are loaded lazily on first request."""
     _series()
-    _episodes()
 
 
 def search_series(query: str, limit: int = 5) -> list[dict]:
@@ -76,9 +72,14 @@ def get_episodes(imdb_id: str) -> list[dict]:
     """
     Return all episodes for a series sorted by (season, episode).
     Each episode has: season, episode, title, imdb_score, imdb_votes.
+    Uses parquet filter pushdown — only reads this series' rows from disk.
     """
-    df = _episodes()
-    eps = df[df["parentTconst"] == imdb_id].sort_values(["seasonNumber", "episodeNumber"])
+    import pyarrow.parquet as pq
+    table = pq.read_table(
+        _episodes_path(),
+        filters=[("parentTconst", "=", imdb_id)],
+    )
+    eps = table.to_pandas().sort_values(["seasonNumber", "episodeNumber"])
 
     return [
         {
