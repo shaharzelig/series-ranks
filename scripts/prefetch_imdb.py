@@ -63,7 +63,9 @@ eps = eps.merge(basics[["tconst", "primaryTitle"]], on="tconst", how="left")
 eps["seasonNumber"]  = eps["seasonNumber"].astype("int16")
 eps["episodeNumber"] = eps["episodeNumber"].astype("int16")
 eps["numVotes"]      = pd.to_numeric(eps["numVotes"], errors="coerce").fillna(0).astype("int32")
-eps.to_parquet(os.path.join(DATA_DIR, "episodes.parquet"), index=False)
+# Sort by parentTconst so pyarrow row-group min/max stats allow efficient per-series filtering
+eps = eps.sort_values("parentTconst").reset_index(drop=True)
+eps.to_parquet(os.path.join(DATA_DIR, "episodes.parquet"), index=False, row_group_size=50_000)
 print(f"  {len(eps):,} episodes")
 
 print("Done.")
