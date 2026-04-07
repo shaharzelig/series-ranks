@@ -62,11 +62,25 @@ def search_series(query: str, limit: int = 5) -> list[dict]:
     basics = _get_df("title.basics.tsv.gz")
     episodes = _get_df("title.episode.tsv.gz")
 
-    matches = basics[basics["primaryTitle"].str.lower().str.contains(query.lower(), na=False)]
+    q = query.lower()
+    matches = basics[basics["primaryTitle"].str.lower().str.contains(q, na=False)].copy()
 
     ep_counts = episodes.groupby("parentTconst").size().rename("episode_count")
     matches = matches.join(ep_counts, on="tconst")
-    matches = matches.sort_values("episode_count", ascending=False).head(limit)
+
+    # Relevance: 0=exact, 1=starts-with, 2=contains — then by episode_count desc
+    def relevance(title: str) -> int:
+        t = title.lower()
+        if t == q:
+            return 0
+        if t.startswith(q):
+            return 1
+        return 2
+
+    matches["_relevance"] = matches["primaryTitle"].map(relevance)
+    matches = matches.sort_values(
+        ["_relevance", "episode_count"], ascending=[True, False]
+    ).head(limit)
 
     return [
         {
