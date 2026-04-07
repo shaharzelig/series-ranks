@@ -89,10 +89,10 @@ Two new lines added below the existing verdict headline, before the top-N badge:
 ```
 📊 45% of episodes ahead beat your typical watch · 12% beat your best
 ```
-- `pct_ahead_beats_median` > 50% → green; 25–50% → yellow; < 25% → red
+- `pct_ahead_beats_median` ≥ 50% → green; 25–49% → yellow; < 25% → red
 - Applied as a CSS class on the line element
 
-**Momentum line** (hidden if `momentum` is null):
+**Momentum line** (hidden if `momentum.direction` is null):
 ```
 ↑ Next 5 episodes trend higher than your last 5  (8.1 vs 7.5)
 ```
@@ -145,11 +145,12 @@ GET /api/verdict/{imdb_id}?at=S03E05
 
 | Case | Behaviour |
 |------|-----------|
-| User enters first episode of series (nothing watched) | `watched_median`, `watched_best`, all density fields → `None`; density line hidden |
-| Series has only 1 season | Breakdown shows one row; momentum works if enough episodes |
+| All episodes at/before current position are unrated | `watched_median`, `watched_best`, density fields → `None`; density line hidden |
+| No rated episodes ahead | `pct_ahead_beats_median` and `pct_ahead_beats_best` → `0`; density line still shown |
+| Series has only 1 season | Breakdown shows one row; momentum works if enough episodes exist |
 | Season has no rated episodes | `median: null`, row shows "No ratings yet", bar omitted |
-| Fewer than 5 episodes in a window | Momentum uses however many exist; still shown |
-| All episodes ahead (user at S01E01) | Density computed against empty watched set → hidden |
+| Fewer than 5 episodes in a window | Momentum uses however many exist; `direction` still computed if both windows non-empty |
+| User at last episode of series (nothing ahead) | `ahead_median` → `None`; `direction` → `None`; momentum line hidden |
 
 ---
 
