@@ -286,7 +286,9 @@ function renderVerdictCard(v) {
   let bestLine = '';
   if (v.best_episode_ahead) {
     const b = v.best_episode_ahead;
-    bestLine = `Best ahead: S${String(b.season).padStart(2,'0')}E${String(b.episode).padStart(2,'0')} "${b.title}" ⭐ ${b.score?.toFixed(1)}`;
+    const epCode = `S${String(b.season).padStart(2,'0')}E${String(b.episode).padStart(2,'0')}`;
+    const epTitle = b.title ? ` "${b.title}"` : '';
+    bestLine = `Best ahead: ${epCode}${epTitle} ⭐ ${b.score?.toFixed(1) ?? '—'}`;
   }
 
   verdictCard.className = `verdict-card ${classes[v.verdict]}`;
