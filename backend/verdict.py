@@ -87,11 +87,11 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
     else:
         verdict = "you_can_stop"
 
-    ahead = [e for e in rated if (e["season"], e["episode"]) not in watched]
+    ahead  = ahead_eps
     best_ahead = max(ahead, key=lambda e: e["score"], default=None)
 
     avg_ahead = round(sum(e["score"] for e in ahead) / len(ahead), 1) if ahead else None
-    behind = [e for e in rated if (e["season"], e["episode"]) in watched]
+    behind = watched_eps
     avg_behind = round(sum(e["score"] for e in behind) / len(behind), 1) if behind else None
 
     return {
