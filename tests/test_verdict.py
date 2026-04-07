@@ -133,3 +133,40 @@ def test_early_return_includes_all_fields():
     assert result["pct_ahead_beats_median"] is None
     assert result["momentum"] == {"behind_median": None, "ahead_median": None, "direction": None}
     assert result["seasons"] == []
+
+
+# ── momentum ────────────────────────────────────────────────────────────────
+
+def test_momentum_direction_up():
+    # last 5 watched: [6.0,6.5,6.8,7.0,7.0] → sorted median = 6.8
+    # next 5 ahead:   [8.0,7.9,8.0,8.2,8.5] → sorted median = 8.0
+    # diff = 1.2 ≥ 0.3 → up
+    eps = _make_episodes([6.0, 6.5, 6.8, 7.0, 7.0, 8.0, 7.9, 8.0, 8.2, 8.5])
+    result = compute_verdict(eps, current_season=1, current_episode=5)
+    assert result["momentum"]["direction"] == "up"
+    assert result["momentum"]["behind_median"] < result["momentum"]["ahead_median"]
+
+def test_momentum_direction_down():
+    # reverse: good behind, weak ahead
+    eps = _make_episodes([8.0, 7.9, 8.0, 8.2, 8.5, 6.0, 6.5, 6.8, 7.0, 7.0])
+    result = compute_verdict(eps, current_season=1, current_episode=5)
+    assert result["momentum"]["direction"] == "down"
+
+def test_momentum_direction_flat():
+    # both windows median ~7.2, diff < 0.3
+    eps = _make_episodes([7.0, 7.5, 7.2, 7.3, 7.1, 7.3, 7.0, 7.4, 7.2, 7.1])
+    result = compute_verdict(eps, current_season=1, current_episode=5)
+    assert result["momentum"]["direction"] == "flat"
+
+def test_momentum_direction_none_when_nothing_ahead():
+    eps = _make_episodes([7.0, 8.0, 9.0])
+    result = compute_verdict(eps, current_season=1, current_episode=3)
+    assert result["momentum"]["direction"] is None
+    assert result["momentum"]["ahead_median"] is None
+    assert result["momentum"]["behind_median"] == 8.0  # median of [7,8,9]
+
+def test_momentum_object_always_present():
+    eps = _make_episodes([8.0])
+    result = compute_verdict(eps, current_season=1, current_episode=1)
+    assert "momentum" in result
+    assert isinstance(result["momentum"], dict)

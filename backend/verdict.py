@@ -94,6 +94,28 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
     behind = watched_eps
     avg_behind = round(sum(e["score"] for e in behind) / len(behind), 1) if behind else None
 
+    # ── Momentum ─────────────────────────────────────────────────────────────
+    behind_window    = watched_eps[-5:]
+    ahead_window     = ahead_eps[:5]
+
+    behind_scores_m  = [e["score"] for e in behind_window]
+    ahead_scores_m   = [e["score"] for e in ahead_window]
+
+    behind_median_m  = round(statistics.median(behind_scores_m), 3) if behind_scores_m else None
+    ahead_median_m   = round(statistics.median(ahead_scores_m),  3) if ahead_scores_m  else None
+
+    if behind_median_m is not None and ahead_median_m is not None:
+        diff      = ahead_median_m - behind_median_m
+        direction = "up" if diff >= 0.3 else "down" if diff <= -0.3 else "flat"
+    else:
+        direction = None
+
+    momentum = {
+        "behind_median": behind_median_m,
+        "ahead_median":  ahead_median_m,
+        "direction":     direction,
+    }
+
     return {
         "verdict": verdict,
         "message": f"{top_n_ahead} of the top {top_n} episodes are still ahead of you",
@@ -107,6 +129,6 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
         "watched_best": watched_best,
         "pct_ahead_beats_median": pct_ahead_beats_median,
         "pct_ahead_beats_best": pct_ahead_beats_best,
-        "momentum": {"behind_median": None, "ahead_median": None, "direction": None},
+        "momentum": momentum,
         "seasons": [],
     }
