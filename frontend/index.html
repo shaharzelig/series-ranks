@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Series Ranks</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1 class="logo">Series Ranks</h1>
+
+    <!-- Search -->
+    <div class="search-row">
+      <div class="search-wrap">
+        <input id="searchInput" type="text" placeholder="Search for a series…" autocomplete="off"/>
+        <ul id="dropdown" class="dropdown hidden"></ul>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loadingMsg" class="loading hidden">
+      Downloading ratings data (100 MB, first time only)…
+    </div>
+
+    <!-- Main content — hidden until series loaded -->
+    <div id="mainContent" class="hidden">
+
+      <h2 id="seriesTitle" class="series-title"></h2>
+
+      <!-- "You are here" row -->
+      <div class="verdict-row">
+        <label for="episodeInput">I'm currently at</label>
+        <input id="episodeInput" type="text" placeholder="S03E05" maxlength="8"/>
+        <button id="checkBtn">Should I keep watching?</button>
+        <span id="episodeError" class="error-msg hidden"></span>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-scroll">
+        <div id="chartWrap">
+          <canvas id="chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="legend" id="legend">
+        <span class="legend-item"><span class="dot blue"></span> Episode</span>
+      </div>
+
+      <!-- Verdict card — hidden until check submitted -->
+      <div id="verdictCard" class="verdict-card hidden"></div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
