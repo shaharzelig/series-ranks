@@ -331,7 +331,7 @@ function renderSeasonBreakdown(v) {
 
   const rows = v.seasons.map(s => {
     const med      = s.median;
-    const barWidth = med !== null ? Math.max(0, (med - 5) / 5 * 100).toFixed(1) : '0';
+    const barWidth = med !== null ? Math.min(100, Math.max(0, (med - 5) / 5 * 100)).toFixed(1) : '0';
 
     let barColor;
     if (s.is_fully_watched) {

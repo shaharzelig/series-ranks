@@ -127,6 +127,8 @@ def compute_verdict(episodes: list[dict], current_season: int, current_episode: 
     avg_behind = round(sum(e["score"] for e in behind) / len(behind), 1) if behind else None
 
     # ── Momentum ─────────────────────────────────────────────────────────────
+    watched_eps.sort(key=lambda e: (e["season"], e["episode"]))
+    ahead_eps.sort(key=lambda e: (e["season"], e["episode"]))
     behind_window    = watched_eps[-5:]
     ahead_window     = ahead_eps[:5]
 
