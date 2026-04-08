@@ -15,6 +15,7 @@ const checkBtn     = document.getElementById('checkBtn');
 const episodeError = document.getElementById('episodeError');
 const verdictCard  = document.getElementById('verdictCard');
 const legend       = document.getElementById('legend');
+const seasonBreakdown  = document.getElementById('seasonBreakdown');
 
 // ── Search (debounced) ─────────────────────────────────────────────────────
 let searchTimer = null;
@@ -84,7 +85,7 @@ async function loadSeries(result) {
 
     verdictCard.classList.add('hidden');
     verdictCard.innerHTML = '';
-    document.getElementById('seasonBreakdown').classList.add('hidden');
+    seasonBreakdown.classList.add('hidden');
     episodeInput.value = '';
     episodeError.classList.add('hidden');
 
@@ -325,12 +326,12 @@ function renderVerdictCard(v) {
 }
 
 function renderSeasonBreakdown(v) {
-  const el = document.getElementById('seasonBreakdown');
+  const el = seasonBreakdown;
   if (!v.seasons || !v.seasons.length) { el.classList.add('hidden'); return; }
 
   const rows = v.seasons.map(s => {
     const med      = s.median;
-    const barWidth = med !== null ? ((med - 5) / 5 * 100).toFixed(1) : 0;
+    const barWidth = med !== null ? Math.max(0, (med - 5) / 5 * 100).toFixed(1) : '0';
 
     let barColor;
     if (s.is_fully_watched) {
