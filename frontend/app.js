@@ -287,12 +287,12 @@ function renderVerdictCard(v) {
   if (v.best_episode_ahead) {
     const b = v.best_episode_ahead;
     const epCode  = `S${String(b.season).padStart(2,'0')}E${String(b.episode).padStart(2,'0')}`;
-    const epTitle = b.title ? ` "${b.title}"` : '';
+    const epTitle = b.title ? ` "${b.title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}"` : '';
     bestLine = `Best ahead: ${epCode}${epTitle} ⭐ ${b.score?.toFixed(1) ?? '—'}`;
   }
 
   let densityLine = '';
-  if (v.watched_median != null && v.pct_ahead_beats_median != null) {
+  if (v.watched_median != null && v.pct_ahead_beats_median != null && v.pct_ahead_beats_best != null) {
     const cls = v.pct_ahead_beats_median >= 50 ? 'density-green'
               : v.pct_ahead_beats_median >= 25 ? 'density-yellow'
               : 'density-red';
@@ -303,7 +303,7 @@ function renderVerdictCard(v) {
   if (v.momentum && v.momentum.direction != null) {
     const arrows = { up: '↑', down: '↓', flat: '→' };
     const dirs   = { up: 'higher', down: 'lower', flat: 'similar' };
-    momentumLine = `<div class="verdict-metric">${arrows[v.momentum.direction]} Next 5 episodes trend ${dirs[v.momentum.direction]} than your last 5 (${v.momentum.ahead_median} vs ${v.momentum.behind_median})</div>`;
+    momentumLine = `<div class="verdict-metric">${arrows[v.momentum.direction]} Next 5 episodes trend ${dirs[v.momentum.direction]} than your last 5 (${v.momentum.ahead_median.toFixed(1)} vs ${v.momentum.behind_median.toFixed(1)})</div>`;
   }
 
   verdictCard.className = `verdict-card ${classes[v.verdict]}`;
