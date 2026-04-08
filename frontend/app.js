@@ -279,16 +279,31 @@ async function checkVerdict() {
 }
 
 function renderVerdictCard(v) {
-  const icons = { keep_watching: '✅', up_to_you: '🤔', you_can_stop: '🛑' };
-  const labels = { keep_watching: 'Keep Watching', up_to_you: 'Up to You', you_can_stop: 'You Can Stop' };
+  const icons   = { keep_watching: '✅', up_to_you: '🤔', you_can_stop: '🛑' };
+  const labels  = { keep_watching: 'Keep Watching', up_to_you: 'Up to You', you_can_stop: 'You Can Stop' };
   const classes = { keep_watching: 'keep', up_to_you: 'up', you_can_stop: 'stop' };
 
   let bestLine = '';
   if (v.best_episode_ahead) {
     const b = v.best_episode_ahead;
-    const epCode = `S${String(b.season).padStart(2,'0')}E${String(b.episode).padStart(2,'0')}`;
+    const epCode  = `S${String(b.season).padStart(2,'0')}E${String(b.episode).padStart(2,'0')}`;
     const epTitle = b.title ? ` "${b.title}"` : '';
     bestLine = `Best ahead: ${epCode}${epTitle} ⭐ ${b.score?.toFixed(1) ?? '—'}`;
+  }
+
+  let densityLine = '';
+  if (v.watched_median != null && v.pct_ahead_beats_median != null) {
+    const cls = v.pct_ahead_beats_median >= 50 ? 'density-green'
+              : v.pct_ahead_beats_median >= 25 ? 'density-yellow'
+              : 'density-red';
+    densityLine = `<div class="verdict-metric ${cls}">📊 ${v.pct_ahead_beats_median}% of episodes ahead beat your typical watch · ${v.pct_ahead_beats_best}% beat your best</div>`;
+  }
+
+  let momentumLine = '';
+  if (v.momentum && v.momentum.direction != null) {
+    const arrows = { up: '↑', down: '↓', flat: '→' };
+    const dirs   = { up: 'higher', down: 'lower', flat: 'similar' };
+    momentumLine = `<div class="verdict-metric">${arrows[v.momentum.direction]} Next 5 episodes trend ${dirs[v.momentum.direction]} than your last 5 (${v.momentum.ahead_median} vs ${v.momentum.behind_median})</div>`;
   }
 
   verdictCard.className = `verdict-card ${classes[v.verdict]}`;
@@ -296,6 +311,8 @@ function renderVerdictCard(v) {
     <div>
       <div class="verdict-headline">${icons[v.verdict]} ${labels[v.verdict]}</div>
       <div class="verdict-sub">${v.message}${bestLine ? ' · ' + bestLine : ''}</div>
+      ${densityLine}
+      ${momentumLine}
     </div>
     <div class="top-n-badge">
       <div class="top-n-number">${v.top_n_ahead}<span class="top-n-denom">/${v.top_n}</span></div>
