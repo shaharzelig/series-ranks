@@ -174,3 +174,48 @@ html, body { background: var(--bg); color: var(--text); font-family: -apple-syst
   .verdict-card { grid-template-columns: 1fr; }
   .top-n-badge { display: flex; align-items: center; gap: 10px; min-width: unset; width: 100%; }
 }
+
+/* ── Season breakdown ───────────────────────────────────────────────────── */
+#seasonBreakdown {
+  margin-top: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+.season-breakdown-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+.season-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 100px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.season-label { font-size: 12px; color: var(--muted); font-weight: 600; }
+.season-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.season-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.season-bar { height: 100%; border-radius: 4px; }
+.season-score { font-size: 11px; color: var(--text); white-space: nowrap; min-width: 28px; }
+.season-status { font-size: 11px; color: var(--muted); text-align: right; }
+.season-status.season-here { color: var(--yellow); }
+
+@media (max-width: 600px) {
+  .season-row { grid-template-columns: 36px 1fr 80px; }
+}

@@ -84,6 +84,7 @@ async function loadSeries(result) {
 
     verdictCard.classList.add('hidden');
     verdictCard.innerHTML = '';
+    document.getElementById('seasonBreakdown').classList.add('hidden');
     episodeInput.value = '';
     episodeError.classList.add('hidden');
 
@@ -276,6 +277,7 @@ async function checkVerdict() {
   renderChart(currentSeries.episodes, youAreHereIndex, topNSet);
   renderLegend(true);
   renderVerdictCard(v);
+  renderSeasonBreakdown(v);
 }
 
 function renderVerdictCard(v) {
@@ -320,6 +322,45 @@ function renderVerdictCard(v) {
     </div>
   `;
   verdictCard.classList.remove('hidden');
+}
+
+function renderSeasonBreakdown(v) {
+  const el = document.getElementById('seasonBreakdown');
+  if (!v.seasons || !v.seasons.length) { el.classList.add('hidden'); return; }
+
+  const rows = v.seasons.map(s => {
+    const med      = s.median;
+    const barWidth = med !== null ? ((med - 5) / 5 * 100).toFixed(1) : 0;
+
+    let barColor;
+    if (s.is_fully_watched) {
+      barColor = 'var(--grey-line)';
+    } else if (s.is_partially_watched) {
+      barColor = 'var(--yellow)';
+    } else {
+      // ahead season: blue if above watched benchmark, red if below
+      barColor = (v.watched_median != null && med !== null && med > v.watched_median)
+        ? 'var(--blue)' : 'var(--red)';
+    }
+
+    const statusText = s.is_fully_watched    ? '✓ watched'
+                     : s.is_partially_watched ? '▶ you are here'
+                     : 'ahead';
+    const hereClass  = s.is_partially_watched ? ' season-here' : '';
+
+    const barHtml   = `<div class="season-bar-track"><div class="season-bar" style="width:${barWidth}%;background:${barColor}"></div></div>`;
+    const scoreText = med !== null ? med.toFixed(1) : 'No ratings yet';
+
+    return `
+      <div class="season-row">
+        <div class="season-label">S${s.season}</div>
+        <div class="season-bar-wrap">${barHtml}<span class="season-score">${scoreText}</span></div>
+        <div class="season-status${hereClass}">${statusText}</div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="season-breakdown-title">Season breakdown (median scores)</div>${rows}`;
+  el.classList.remove('hidden');
 }
 
 function renderLegend(withVerdict) {
